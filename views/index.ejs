@@ -1,0 +1,134 @@
+<!-- Load header -->
+<%- include('partials/header.ejs') %>
+<div class="main-container">
+    <div class="header">
+        <h1 class="playfair-display-header">Book Notes</h1>
+    </div>
+    <div class="main-content">
+        <form method="post" action="/">
+        <div class="users">
+            <!-- Create different colour button for each user in DB -->
+            <% var colorCounter = 0 %>
+            <% users.forEach((user) => { %>
+                <button class="user-tab" type="submit" value="<%=user.id%>" name="userId" style="background-color: <%= colors[colorCounter] %>;">
+                    <h2><%= user.name %></h2>
+                </button>
+                <% if ((colorCounter + 1) < colors.length) { %>
+                    <% colorCounter++ %>
+                <% } else { %>
+                    <% colorCounter = 0 %>
+                <% } %>
+            <% }) %>
+        </div>
+        </form>
+        <!-- Only load books content if a user has been selected -->
+        <% if (locals.userId) { %>
+            <div class="sort">
+                <form method="post" action="/sort" class="sort-form">
+                    <div class="sort-paras">
+                        Sort:
+                        <select name="sortBy">
+                            <!-- Switch-case statement to maintain sorting on homepage reload -->
+                            <% switch (currentSort) {
+                                case 'date': %>
+                                    <option value="dateAdded" selected>by date added</option>
+                                    <option value="author">by author</option>
+                                    <option value="title">by title</option>
+                            <%  break; %>
+                            <%  case 'author': %> 
+                                    <option value="dateAdded">by date added</option>
+                                    <option value="author" selected>by author</option>
+                                    <option value="title">by title</option>
+                            <%  break; %>
+                            <%  case 'title': %> 
+                                    <option value="dateAdded">by date added</option>
+                                    <option value="author">by author</option>
+                                    <option value="title" selected>by title</option>
+                            <%  break; %>
+                            <% } %>
+                        </select>
+                        <button type="submit">sort</button>
+                    </div>
+                </form>
+            </div>
+            <% bookCounter = 0 %>
+            <!-- Iterate through book details for selected user -->
+            <% books.forEach((book) => { %>
+                <div class="book-details">
+                <form method="post" action="/update"></form>
+                    <div class="book-content">
+                        <div class="description-img">
+                            <img class="book-cover" src="https://covers.openlibrary.org/b/isbn/<%=book.isbn%>-M.jpg">
+                        </div>
+                        <div class="post-heading">
+                            <h2 class="book-heading" id="book-title-<%=book.id%>"><%=book.book_name%></h2>
+                            <input class="edit-title-input" id="title-<%=book.id%>" name="title" hidden>
+                            <h3 class="book-heading" id="book-author-<%=book.id%>">by <%=book.author%></h2>
+                            <input class="edit-author-input" id="author-<%=book.id%>" name="author" hidden>
+                            <input type="hidden" name="bookId" value="<%=book.id%>">
+                            <button type="submit" class="submit-update" id="submit-update-<%=book.id%>" hidden>Update</button>
+                        </div>
+                </form>
+                        <div class="description-text">
+                            <p><%=bookDescriptions[bookCounter]%></p>
+                        </div>
+                    </div>
+                    <div class=edit-book>
+                        <i class="fa-regular fa-pen-to-square" id="<%= book.id %>"></i>
+                    <form method="post" action="/delete">
+                        <button type="submit" id="delete-btn" value="<%= book.id %>" name="bookId"><i class="fa fa-regular fa-trash"></i></button>
+                    </form>
+                    </div>
+                </div>
+                    <% bookCounter++ %>
+             <% }) %>
+            </div>
+            <!-- Form for ISBN input to add book for selected user -->
+            <form method="post" action="/add">
+            <div class="add-container">
+                <input name="isbn" placeholder="Type in ISBN">
+                <input type="hidden" name="userId" value="<%= userId %>">
+                <button id="add-btn" type="submit">
+                    <h2 id="add-btn-txt">Add book</h2>
+                </button>
+            </div>
+            </form>
+            <% } %>
+</div>
+<script>
+    // If error, display alert on page load
+    if ("<%= locals.error %>") {
+        window.addEventListener("load", (event) => {
+        alert("<%= locals.error %>");
+    });
+};
+    // Only unhide input boxed for selected book for updating
+    Array.from(document.getElementsByClassName("fa-pen-to-square")).forEach(element => {
+        element.addEventListener("click", (event) => {
+            Array.from(document.getElementsByClassName("edit-title-input")).forEach(element => {
+                element.hidden = true;
+            })
+            Array.from(document.getElementsByClassName("edit-author-input")).forEach(element => {
+                element.hidden = true;
+            })
+            Array.from(document.getElementsByClassName("book-heading")).forEach(element => {
+                element.hidden = false;
+            })
+            Array.from(document.getElementsByClassName("submit-update")).forEach(element => {
+                element.hidden = true;
+            })
+
+            // Populate input boxes with current book title and author as default values
+            document.getElementById(`title-${element.id}`).hidden = false;
+            document.getElementById(`title-${element.id}`).defaultValue = document.getElementById(`book-title-${element.id}`).textContent;
+            document.getElementById(`author-${element.id}`).hidden = false;
+            document.getElementById(`author-${element.id}`).defaultValue = document.getElementById(`book-author-${element.id}`).textContent.split("by ")[1];
+            document.getElementById(`book-title-${element.id}`).hidden = true;
+            document.getElementById(`book-author-${element.id}`).hidden = true;
+            document.getElementById(`submit-update-${element.id}`).hidden = false;
+        })
+    })
+</script>
+</body>
+<!-- import footer -->
+<%- include('partials/footer.ejs') %>
